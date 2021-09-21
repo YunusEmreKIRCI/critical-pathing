@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <string.h>
+
+#define ACOUNT 10
+
+int find_index(char name[10], char look_for){
+    for(int i=0;i<10;i++){
+        if(name[i]==look_for)
+            return i;
+    }
+    return -1;
+}
+int main(){
+    int early_start[ACOUNT]={0,0,0,0,0,0,0,0,0,0};
+    int early_finish[ACOUNT]={0,0,0,0,0,0,0,0,0,0};
+    int late_start[ACOUNT]={0,0,0,0,0,0,0,0,0,0};
+    int late_finish[ACOUNT]={0,0,0,0,0,0,0,0,0,0};
+    int duration[ACOUNT]={0,0,0,0,0,0,0,0,0,0};
+    char name[ACOUNT];
+    int float_[ACOUNT];
+
+    char predecessor_[ACOUNT][ACOUNT-1];       // öncekiler
+    char successors_[ACOUNT][9]={'\0'}; // sonrakiler
+
+
+    for(int i = 0;i<ACOUNT;i++){
+        predecessor_[i][0] = '\0';  // tümü NULL
+    }
+
+    // veri girişi, isim ve süre
+    for(int i=0;i<ACOUNT;i++){
+        printf("Enter name of Activity #%d: ",i+1);
+        scanf(" %c",&name[i]);
+        printf("Enter duration of Activity #%d: ",i+1);
+        scanf(" %d",&duration[i]);
+    }
+
+    // ilişkilerin alınması,
+    for(int j=0;j<ACOUNT;j++){  // ilişkilerin alınması
+        char opt[ACOUNT];
+        printf("Is there predecessor for %c?: ",name[j]);
+        scanf(" %s",opt);
+        if(strcmp(opt,"yes")==0 || strcmp(opt,"y")==0){
+            int count;
+            printf("Number of predecessors?: ");
+            scanf(" %d",&count);
+            for(int i=0;i<count;i++){
+                printf("Enter predecessor #%d: ",i+1);
+                scanf(" %c",&predecessor_[j][i]);
+                getchar();
+            }
+            predecessor_[j][count]='\0';
+        }
+    }
+
+    // sonrakileri  hesapla
+    for(int i=0;i<ACOUNT;i++){
+      int pcount=0;
+      for(int k=0;k<ACOUNT;k++){
+        for(int j=0;predecessor_[k][j]!='\0';j++){
+          if(predecessor_[k][j]==name[i]){
+            successors_[i][pcount]=name[k];
+            pcount++;
+            break;
+          }
+        }
+      }
+    }
+
+    // early finish, early start
+    for(int i=0;i<ACOUNT;i++){
+      if(predecessor_[i][0]=='\0'){ // öncekisi yoksa
+        early_start[i] = 0;
+      }
+      else{
+        early_start[i]=0;
+        for(int j=0;predecessor_[i][j]!='\0';j++){
+          int ind = find_index(name,predecessor_[i][j]);
+          if(ind==-1){
+            break;
+          }
+          else{
+            if(early_finish[ind]>early_start[i]){ // öncekilerin maks. early_finish i mevcudun early_start ı olarak seçiliyor
+              early_start[i]=early_finish[ind];
+            }
+          }
+        }
+      }
+      early_finish[i] = early_start[i] + duration[i];
+    }
+
+    // late_start, late_finish
+    for(int i=ACOUNT-1;i>=0;i--){
+      if(successors_[i][0]=='\0'){
+        late_start[i]=early_start[i];
+        late_finish[i]=early_finish[i];
+      }
+      else{
+        late_finish[i]=100000;
+        for(int j=0;successors_[i][j]!='\0';j++){
+           int ind = find_index(name,successors_[i][j]);
+           if(ind==-1){
+             break;
+           }
+           else{
+             if(late_start[ind]<late_finish[i]){
+               late_finish[i]=late_start[ind];
+             }
+           }
+        }
+      }
+      late_start[i] = late_finish[i] - duration[i];
+      float_[i] = late_start[i] - early_start[i];
+    }
+
+    for(int y=0;y<10;y++){
+        printf("\n\n");
+        printf("Activity name : %c\n",name[y]);
+        printf("      ES : %d\n",early_start[y]);
+        printf("Duration : %d\n",duration[y]);
+        printf("      EF : %d\n",early_finish[y]);
+        printf("      LS : %d\n",late_start[y]);
+        printf("   Float : %d\n",float_[y]);
+        printf("      LF : %d\n\n\n",late_finish[y]);
+    }
+    return 0;
+}
